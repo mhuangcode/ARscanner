@@ -43,7 +43,7 @@ namespace GoogleARCore.Examples.Common
         // Keep previous frame's mesh polygon to avoid mesh update every frame.
         private List<Vector3> m_PreviousFrameMeshVertices = new List<Vector3>();
         private List<Vector3> m_MeshVertices = new List<Vector3>();
-        private Vector3 m_PlaneCenter = new Vector3();
+        public Vector3 center = new Vector3();
 
         private List<Color> m_MeshColors = new List<Color>();
 
@@ -58,9 +58,6 @@ namespace GoogleARCore.Examples.Common
         List<GameObject> markers = new List<GameObject>();
         public GameObject markerObject;
         public GameObject markerVolume;
-        public Vector3 center = Vector3.zero;
-        public Vector3 minDimentions = Vector3.zero;
-        public Vector3 maxDimentions = Vector3.zero;
         public bool isFloor = false;
         // public GameObject LayerManager;
         GameObject pointOfInterest;
@@ -88,13 +85,12 @@ namespace GoogleARCore.Examples.Common
                 markers.Add(newMarker);
             }
 
-            if (!isFloor) {
-                pointOfInterest = Instantiate(markerVolume, Vector3.zero, Quaternion.identity);
-                pointOfInterest.transform.localScale = Vector3.zero;
-                pointOfInterest.transform.parent = gameObject.transform;
-                infoText = Instantiate(volumeInfoText, Vector3.zero, Quaternion.identity);
-                infoText.transform.parent = gameObject.transform;
-            }
+            pointOfInterest = Instantiate(markerVolume, Vector3.zero, Quaternion.identity);
+            pointOfInterest.transform.localScale = Vector3.zero;
+            pointOfInterest.transform.parent = gameObject.transform;
+            pointOfInterest.GetComponent<Renderer>().material.color = Random.ColorHSV(0f, 1f, 1f, 1f, 0.5f, 1f);
+            infoText = Instantiate(volumeInfoText, Vector3.zero, Quaternion.identity);
+            infoText.transform.parent = gameObject.transform;
         }
 
         public void updateMarkers() {
@@ -105,12 +101,19 @@ namespace GoogleARCore.Examples.Common
             // markers[2].transform.position = new Vector3(maxDimentions.x, maxDimentions.y, minDimentions.z);
             // markers[3].transform.position = new Vector3(maxDimentions.x, maxDimentions.y, maxDimentions.z);
 
-            markers[0].transform.position = new Vector3(center.x - (m_DetectedPlane.ExtentX / 2), minDimentions.y, center.z - (m_DetectedPlane.ExtentZ / 2));
-            markers[1].transform.position = new Vector3(center.x - (m_DetectedPlane.ExtentX / 2), minDimentions.y, center.z + (m_DetectedPlane.ExtentZ / 2));
-            markers[2].transform.position = new Vector3(center.x + (m_DetectedPlane.ExtentX / 2), minDimentions.y, center.z - (m_DetectedPlane.ExtentZ / 2));
-            markers[3].transform.position = new Vector3(center.x + (m_DetectedPlane.ExtentX / 2), minDimentions.y, center.z + (m_DetectedPlane.ExtentZ / 2));
-            centerTracker.transform.position =  m_PlaneCenter;
-            centerTracker.transform.rotation = m_DetectedPlane.CenterPose.rotation;
+            // markers[0].transform.position = new Vector3(center.x - (m_DetectedPlane.ExtentX / 2), minDimentions.y, center.z - (m_DetectedPlane.ExtentZ / 2));
+            // markers[1].transform.position = new Vector3(center.x - (m_DetectedPlane.ExtentX / 2), minDimentions.y, center.z + (m_DetectedPlane.ExtentZ / 2));
+            // markers[2].transform.position = new Vector3(center.x + (m_DetectedPlane.ExtentX / 2), minDimentions.y, center.z - (m_DetectedPlane.ExtentZ / 2));
+            // markers[3].transform.position = new Vector3(center.x + (m_DetectedPlane.ExtentX / 2), minDimentions.y, center.z + (m_DetectedPlane.ExtentZ / 2));
+
+
+            markers[0].transform.localPosition = new Vector3(-m_DetectedPlane.ExtentX * 10, 0f, -m_DetectedPlane.ExtentZ * 10);
+            markers[1].transform.localPosition = new Vector3(-m_DetectedPlane.ExtentX * 10, 0f, m_DetectedPlane.ExtentZ * 10);
+            markers[2].transform.localPosition = new Vector3(m_DetectedPlane.ExtentX * 10, 0f, -m_DetectedPlane.ExtentZ * 10);
+            markers[3].transform.localPosition = new Vector3(m_DetectedPlane.ExtentX * 10, 0f, m_DetectedPlane.ExtentZ * 10);
+
+            centerTracker.transform.position = center;
+            //centerTracker.transform.rotation = m_DetectedPlane.CenterPose.rotation;
 
             if (!isFloor && m_DetectedPlane.PlaneType == (DetectedPlaneType)0) {
                 float distToFloor = getFloorDist();
@@ -125,23 +128,24 @@ namespace GoogleARCore.Examples.Common
                 pointOfInterest.transform.rotation = m_DetectedPlane.CenterPose.rotation;
                 infoText.transform.position = poiCenter;
 
-                Vector3 scale = maxDimentions - minDimentions;
-                scale.x = Mathf.Abs(m_DetectedPlane.ExtentX);
-                scale.y = Mathf.Abs(distToFloor);
-                scale.z = Mathf.Abs(m_DetectedPlane.ExtentZ);
+                Vector3 scale = new Vector3(Mathf.Abs(m_DetectedPlane.ExtentX), distToFloor, Mathf.Abs(m_DetectedPlane.ExtentZ));
+                // scale.x = Mathf.Abs(m_DetectedPlane.ExtentX);
+                // scale.y = Mathf.Abs(distToFloor);
+                // scale.z = Mathf.Abs(m_DetectedPlane.ExtentZ);
                 pointOfInterest.transform.localScale = scale;
 
                 infoText.GetComponent<TextBillboarding>().setText((scale.x * 100) + "cm x " + (scale.y * 100) + "cm x " + (scale.z * 100) + "cm");
             }
+
+            centerTracker.transform.rotation = m_DetectedPlane.CenterPose.rotation;
         }
 
         float getFloorDist() {
             int layer_mask = LayerMask.GetMask("Floor");
             RaycastHit hit;
 
-            if (Physics.Raycast (center, pointOfInterest.transform.TransformDirection(Vector3.down), out hit, 100f, layer_mask))
+            if (Physics.Raycast(center, pointOfInterest.transform.TransformDirection(Vector3.down), out hit, 100f, layer_mask))
             {
-                Debug.Log(hit.distance);
                 return hit.distance;
             }
 
@@ -168,8 +172,8 @@ namespace GoogleARCore.Examples.Common
         void OnDrawGizmos()
         {
         // Draw a yellow sphere at the transform's position
-            Gizmos.color = Color.yellow;
-            Gizmos.DrawSphere(m_PlaneCenter, 0.05f);
+            // Gizmos.color = Color.yellow;
+            // Gizmos.DrawSphere(center, 0.05f);
         }
 
         /// <summary>
@@ -188,13 +192,25 @@ namespace GoogleARCore.Examples.Common
             }
             else if (m_DetectedPlane.TrackingState != TrackingState.Tracking)
             {
-                 m_MeshRenderer.enabled = false;
+                 setRenderer(false);
                  return;
             }
 
-            m_MeshRenderer.enabled = true;
+            setRenderer(true);
 
             _UpdateMeshIfNeeded();
+        }
+
+        void setRenderer(bool isEnabled) {
+            m_MeshRenderer.enabled = isEnabled;
+
+            for (int i = 0; i < markers.Count; i++) {
+                markers[i].GetComponent<MeshRenderer>().enabled = isEnabled;
+            }
+
+            if (!isFloor) {
+                pointOfInterest.GetComponent<MeshRenderer>().enabled = isEnabled;
+            }
         }
 
         /// <summary>
@@ -227,7 +243,7 @@ namespace GoogleARCore.Examples.Common
             m_PreviousFrameMeshVertices.Clear();
             m_PreviousFrameMeshVertices.AddRange(m_MeshVertices);
 
-            m_PlaneCenter = m_DetectedPlane.CenterPose.position;
+            center = m_DetectedPlane.CenterPose.position;
 
             Vector3 planeNormal = m_DetectedPlane.CenterPose.rotation * Vector3.up;
 
@@ -258,9 +274,9 @@ namespace GoogleARCore.Examples.Common
 
             // Feather scale over the distance between plane center and vertices.
             const float featherScale = 0.2f;
-            center = new Vector3(m_PlaneCenter[0], m_PlaneCenter[1], m_PlaneCenter[2]);
-            minDimentions = center;
-            maxDimentions = center;
+            // center = new Vector3(center[0], center[1], center[2]);
+            // minDimentions = center;
+            // maxDimentions = center;
 
             // Add vertex 4 to 7.
             for (int i = 0; i < planePolygonCount; ++i)
@@ -270,10 +286,11 @@ namespace GoogleARCore.Examples.Common
 
 
                 // Vector from plane center to current point
-                Vector3 d = v - m_PlaneCenter;
+                Vector3 d = v - center;
 
                 float scale = 1.0f - Mathf.Min(featherLength / d.magnitude, featherScale);
-                Vector3 newVert = (scale * d) + m_PlaneCenter;
+                scale = 1f;
+                Vector3 newVert = (scale * d) + center;
                 m_MeshVertices.Add(newVert);
 
                 // maxDimentions.x = Mathf.Max(newVert.x, maxDimentions.x);
