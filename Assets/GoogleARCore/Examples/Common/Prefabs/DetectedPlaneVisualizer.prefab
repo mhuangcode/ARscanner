@@ -12,8 +12,7 @@ GameObject:
   - component: {fileID: 33340294062673050}
   - component: {fileID: 23646549736039258}
   - component: {fileID: 114776205485222536}
-  - component: {fileID: 377504353975973321}
-  m_Layer: 9
+  m_Layer: 0
   m_Name: DetectedPlaneVisualizer
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -49,7 +48,7 @@ MeshRenderer:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1654175882956584}
-  m_Enabled: 1
+  m_Enabled: 0
   m_CastShadows: 1
   m_ReceiveShadows: 1
   m_DynamicOccludee: 1
@@ -99,17 +98,3 @@ MonoBehaviour:
   isFloor: 0
   volumeInfoText: {fileID: 4140435370049689550, guid: e9eec97df1de6c04cbca171b37f0ad0d,
     type: 3}
---- !u!64 &377504353975973321
-MeshCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1654175882956584}
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Convex: 0
-  m_CookingOptions: 14
-  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}

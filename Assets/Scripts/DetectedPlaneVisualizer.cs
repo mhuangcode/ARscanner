@@ -88,7 +88,7 @@ namespace GoogleARCore.Examples.Common
             pointOfInterest = Instantiate(markerVolume, Vector3.zero, Quaternion.identity);
             pointOfInterest.transform.localScale = Vector3.zero;
             pointOfInterest.transform.parent = gameObject.transform;
-            pointOfInterest.GetComponent<Renderer>().material.color = Random.ColorHSV(0f, 1f, 1f, 1f, 0.5f, 1f);
+            pointOfInterest.GetComponent<Renderer>().material.color = Random.ColorHSV(0f, 1f, 1f, 1f, 0.5f, 1f, 0.3f, 0.3f);
             infoText = Instantiate(volumeInfoText, Vector3.zero, Quaternion.identity);
             infoText.transform.parent = gameObject.transform;
         }
@@ -107,10 +107,10 @@ namespace GoogleARCore.Examples.Common
             // markers[3].transform.position = new Vector3(center.x + (m_DetectedPlane.ExtentX / 2), minDimentions.y, center.z + (m_DetectedPlane.ExtentZ / 2));
 
 
-            markers[0].transform.localPosition = new Vector3(-m_DetectedPlane.ExtentX * 10, 0f, -m_DetectedPlane.ExtentZ * 10);
-            markers[1].transform.localPosition = new Vector3(-m_DetectedPlane.ExtentX * 10, 0f, m_DetectedPlane.ExtentZ * 10);
-            markers[2].transform.localPosition = new Vector3(m_DetectedPlane.ExtentX * 10, 0f, -m_DetectedPlane.ExtentZ * 10);
-            markers[3].transform.localPosition = new Vector3(m_DetectedPlane.ExtentX * 10, 0f, m_DetectedPlane.ExtentZ * 10);
+            markers[0].transform.localPosition = new Vector3(-m_DetectedPlane.ExtentX * 100, 0f, -m_DetectedPlane.ExtentZ * 100);
+            markers[1].transform.localPosition = new Vector3(-m_DetectedPlane.ExtentX * 100, 0f, m_DetectedPlane.ExtentZ * 100);
+            markers[2].transform.localPosition = new Vector3(m_DetectedPlane.ExtentX * 100, 0f, -m_DetectedPlane.ExtentZ * 100);
+            markers[3].transform.localPosition = new Vector3(m_DetectedPlane.ExtentX * 100, 0f, m_DetectedPlane.ExtentZ * 100);
 
             centerTracker.transform.position = center;
             //centerTracker.transform.rotation = m_DetectedPlane.CenterPose.rotation;
@@ -128,7 +128,7 @@ namespace GoogleARCore.Examples.Common
                 pointOfInterest.transform.rotation = m_DetectedPlane.CenterPose.rotation;
                 infoText.transform.position = poiCenter;
 
-                Vector3 scale = new Vector3(Mathf.Abs(m_DetectedPlane.ExtentX), distToFloor, Mathf.Abs(m_DetectedPlane.ExtentZ));
+                Vector3 scale = new Vector3(Mathf.Abs(m_DetectedPlane.ExtentX) * 0.99f, distToFloor, Mathf.Abs(m_DetectedPlane.ExtentZ) * 0.99f);
                 // scale.x = Mathf.Abs(m_DetectedPlane.ExtentX);
                 // scale.y = Mathf.Abs(distToFloor);
                 // scale.z = Mathf.Abs(m_DetectedPlane.ExtentZ);
@@ -144,16 +144,30 @@ namespace GoogleARCore.Examples.Common
             int layer_mask = LayerMask.GetMask("Floor");
             RaycastHit hit;
 
-            if (Physics.Raycast(center, pointOfInterest.transform.TransformDirection(Vector3.down), out hit, 100f, layer_mask))
-            {
-                return hit.distance;
+            List<float> distances = new List<float>();
+
+            for (int i = 0; i < markers.Count; i++) {
+                if (Physics.Raycast(markers[i].transform.position, new Vector3(0, -1, 0), out hit, 100f))
+                {
+                    distances.Add(hit.distance);
+                    Debug.DrawRay(markers[i].transform.position, new Vector3(0, -1, 0) * hit.distance, Color.yellow, 5f);
+                }
+            }
+
+            if (distances.Count > 0) {
+                float min = distances[0];
+
+                for (int i = 1; i < distances.Count; i++) {
+                    min = Mathf.Min(min, distances[i]);
+                }
+
+                return min;
             }
 
             return -1;
         }
 
         public void setFloor(bool bFloor) {
-            Debug.Log("Setting floor");
             isFloor = bFloor;
             setColorForOrientation();
         }
@@ -237,6 +251,7 @@ namespace GoogleARCore.Examples.Common
 
             if (_AreVerticesListsEqual(m_PreviousFrameMeshVertices, m_MeshVertices))
             {
+
                 return;
             }
 

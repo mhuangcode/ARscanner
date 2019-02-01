@@ -19,6 +19,7 @@
 
 namespace GoogleARCore.Examples.Common
 {
+    using System.Collections.Generic;
     using GoogleARCore;
     using UnityEngine;
 
@@ -32,6 +33,10 @@ namespace GoogleARCore.Examples.Common
         private Mesh m_Mesh;
 
         private Vector3[] m_Points = new Vector3[k_MaxPointCount];
+
+        private Vector3 center;
+        private float boxExtent;
+        public GameObject focusMarker;
 
         /// <summary>
         /// Unity start.
@@ -50,10 +55,16 @@ namespace GoogleARCore.Examples.Common
             // Fill in the data to draw the point cloud.
             if (Frame.PointCloud.IsUpdatedThisFrame)
             {
+                center = Vector3.zero;
+                List<float> distances = new List<float>();
+                List<Vector3> points = new List<Vector3>();
+                boxExtent = 0f;
                 // Copy the point cloud points for mesh verticies.
                 for (int i = 0; i < Frame.PointCloud.PointCount; i++)
                 {
+                    Vector3 pointPos = Frame.PointCloud.GetPointAsStruct(i).Position;
                     m_Points[i] = Frame.PointCloud.GetPointAsStruct(i);
+                    points.Add(pointPos);
                 }
 
                 // Update the mesh indicies array.
@@ -61,12 +72,45 @@ namespace GoogleARCore.Examples.Common
                 for (int i = 0; i < Frame.PointCloud.PointCount; i++)
                 {
                     indices[i] = i;
+
+                    Vector3 pointPos = Frame.PointCloud.GetPointAsStruct(i).Position;
+                    distances.Add(Vector3.Distance(pointPos, center));
                 }
 
                 m_Mesh.Clear();
                 m_Mesh.vertices = m_Points;
                 m_Mesh.SetIndices(indices, MeshTopology.Points, 0);
+
+
+                // if (Frame.PointCloud.PointCount < 30) {
+                //     return;
+                // }
+
+                distances.Sort();
+                points.Sort((a, b) => a.x.CompareTo(b.x));
+
+                int trim = Mathf.FloorToInt(distances.Count * 0.4f);
+
+                for (int i = trim; i < distances.Count - trim; i++) {
+                    boxExtent += distances[i];
+                    center += points[i];
+                }
+
+                boxExtent /= 100 * (distances.Count);
+                center = center / (Frame.PointCloud.PointCount - (trim * 2));
+                if (!float.IsNaN(center.x)) {
+                    focusMarker.transform.position = center;
+                }
             }
         }
+
+
+        // void OnDrawGizmos()
+        // {
+        // // Draw a yellow sphere at the transform's position
+        //     Gizmos.color = Color.yellow;
+        //     Gizmos.DrawWireSphere(center, 0.05f);
+        //     //Gizmos.DrawWireCube(center, new Vector3(boxExtent, boxExtent, boxExtent));
+        // }
     }
 }

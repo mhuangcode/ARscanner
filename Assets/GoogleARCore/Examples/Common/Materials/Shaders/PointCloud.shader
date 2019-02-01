@@ -4,7 +4,7 @@
 // UNITY_SHADER_NO_UPGRADE
 Shader "ARCore/PointCloud" {
 Properties{
-        _PointSize("Point Size", Float) = 5.0
+        _PointSize("Point Size", Float) = 50.0
         _Color ("PointCloud Color", Color) = (0.121, 0.737, 0.823, 1.0)
 }
   SubShader {
