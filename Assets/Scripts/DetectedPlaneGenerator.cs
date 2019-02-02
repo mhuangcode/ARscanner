@@ -41,7 +41,7 @@ namespace GoogleARCore.Examples.Common
         private List<DetectedPlane> m_NewPlanes = new List<DetectedPlane>();
 
 
-        DetectedPlaneVisualizer floorLayer;
+        float floorLevel = float.MaxValue;
         public GameObject floorPlane;
 
         /// <summary>
@@ -66,14 +66,8 @@ namespace GoogleARCore.Examples.Common
                 GameObject planeObject = Instantiate(DetectedPlanePrefab, Vector3.zero, Quaternion.identity, transform);
                 DetectedPlaneVisualizer planeGen = planeObject.GetComponent<DetectedPlaneVisualizer>();
 
-                if (floorLayer == null) {
-                    planeGen.setFloor(true);
-                    floorLayer = planeGen;
-                    floorPlane.transform.position = new Vector3(m_NewPlanes[i].CenterPose.position[0], m_NewPlanes[i].CenterPose.position[1], m_NewPlanes[i].CenterPose.position[2]);
-                } else if (floorLayer.center.y > m_NewPlanes[i].CenterPose.position[1]) {
-                    planeGen.setFloor(true);
-                    floorLayer.setFloor(false);
-                    floorLayer = planeGen;
+                if (m_NewPlanes[i].CenterPose.position[1] < floorLevel) {
+                    floorLevel = m_NewPlanes[i].CenterPose.position[1];
                     floorPlane.transform.position = new Vector3(m_NewPlanes[i].CenterPose.position[0], m_NewPlanes[i].CenterPose.position[1], m_NewPlanes[i].CenterPose.position[2]);
                 }
 

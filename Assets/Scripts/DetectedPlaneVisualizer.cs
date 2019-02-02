@@ -88,7 +88,7 @@ namespace GoogleARCore.Examples.Common
             pointOfInterest = Instantiate(markerVolume, Vector3.zero, Quaternion.identity);
             pointOfInterest.transform.localScale = Vector3.zero;
             pointOfInterest.transform.parent = gameObject.transform;
-            pointOfInterest.GetComponent<Renderer>().material.color = Random.ColorHSV(0f, 1f, 1f, 1f, 0.5f, 1f, 0.3f, 0.3f);
+            pointOfInterest.GetComponent<Renderer>().material.color = Random.ColorHSV(0f, 1f, 0.2f, 0.4f, 0.5f, 1f, 0.3f, 0.3f);
             infoText = Instantiate(volumeInfoText, Vector3.zero, Quaternion.identity);
             infoText.transform.parent = gameObject.transform;
         }
@@ -116,7 +116,7 @@ namespace GoogleARCore.Examples.Common
             //centerTracker.transform.rotation = m_DetectedPlane.CenterPose.rotation;
 
             if (!isFloor && m_DetectedPlane.PlaneType == (DetectedPlaneType)0) {
-                float distToFloor = getFloorDist();
+                float distToFloor = getHeight();
 
                 if (distToFloor == -1) {
                     return;
@@ -140,36 +140,46 @@ namespace GoogleARCore.Examples.Common
             centerTracker.transform.rotation = m_DetectedPlane.CenterPose.rotation;
         }
 
-        float getFloorDist() {
-            int layer_mask = LayerMask.GetMask("Floor");
+        float getHeight() {
+            int layer_mask = LayerMask.GetMask("Floor", "POI");
             RaycastHit hit;
 
             List<float> distances = new List<float>();
 
             for (int i = 0; i < markers.Count; i++) {
-                if (Physics.Raycast(markers[i].transform.position, new Vector3(0, -1, 0), out hit, 100f))
+                if (Physics.Raycast(markers[i].transform.position, new Vector3(0, -1, 0), out hit, 100f, layer_mask))
                 {
                     distances.Add(hit.distance);
                     Debug.DrawRay(markers[i].transform.position, new Vector3(0, -1, 0) * hit.distance, Color.yellow, 5f);
                 }
             }
 
-            if (distances.Count > 0) {
-                float min = distances[0];
-
-                for (int i = 1; i < distances.Count; i++) {
-                    min = Mathf.Min(min, distances[i]);
-                }
-
-                return min;
+            if (distances.Count < 1) {
+                return -1;
             }
 
-            return -1;
-        }
+            int maxCount = 1;
+            int count = 1;
+            float ret = distances[0];
 
-        public void setFloor(bool bFloor) {
-            isFloor = bFloor;
-            setColorForOrientation();
+            for (int i = 1; i < distances.Count; i++) {
+                if (distances[i] == distances[i - 1]) {
+                    count++;
+                } else {
+                    if (count > maxCount) {
+                        maxCount = count;
+                        ret = distances[i - 1];
+                    }
+
+                    count = 1;
+                }
+            }
+
+            if (count > maxCount) {
+                ret = distances[distances.Count - 1];
+            }
+
+            return ret;
         }
 
         public void setColorForOrientation() {
@@ -204,13 +214,13 @@ namespace GoogleARCore.Examples.Common
                 Destroy(gameObject);
                 return;
             }
-            else if (m_DetectedPlane.TrackingState != TrackingState.Tracking)
+            else if (m_DetectedPlane.TrackingState != TrackingState.Tracking || isFloor)
             {
                  setRenderer(false);
                  return;
             }
 
-            setRenderer(true);
+            //setRenderer(true);
 
             _UpdateMeshIfNeeded();
         }
@@ -233,8 +243,14 @@ namespace GoogleARCore.Examples.Common
         /// <param name="plane">The plane to vizualize.</param>
         public void Initialize(DetectedPlane plane)
         {
-
             m_DetectedPlane = plane;
+            m_MeshRenderer.enabled = false;
+            // float distToFloor = getFloorDist();
+
+            // if (Mathf.Approximately(0.01f, distToFloor) || distToFloor < 0.01f) {
+            //     isFloor = true;
+            // }
+
             setColorForOrientation();
             m_MeshRenderer.material.SetFloat("_UvRotation", Random.Range(0.0f, 360.0f));
 

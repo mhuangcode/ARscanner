@@ -23,11 +23,11 @@ public class LayerManager : MonoBehaviour
     }
 
     public void onInitiated(DetectedPlaneVisualizer newLayer) {
-        if (floorLayer == null || newLayer.center.y < floorLayer.center.y) {
-            floorLayer = newLayer;
-            newLayer.setFloor(true);
-        }
+        // if (floorLayer == null || newLayer.center.y < floorLayer.center.y) {
+        //     floorLayer = newLayer;
+        //     newLayer.setFloor(true);
+        // }
 
-        LayerVisualizers.Add(newLayer);
+        // LayerVisualizers.Add(newLayer);
     }
 }

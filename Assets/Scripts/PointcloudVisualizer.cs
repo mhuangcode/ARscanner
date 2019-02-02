@@ -58,13 +58,37 @@ namespace GoogleARCore.Examples.Common
                 center = Vector3.zero;
                 List<float> distances = new List<float>();
                 List<Vector3> points = new List<Vector3>();
+                List<Vector3> confidentPoints = new List<Vector3>();
                 boxExtent = 0f;
                 // Copy the point cloud points for mesh verticies.
                 for (int i = 0; i < Frame.PointCloud.PointCount; i++)
                 {
                     Vector3 pointPos = Frame.PointCloud.GetPointAsStruct(i).Position;
+                    float confidence = Frame.PointCloud.GetPointAsStruct(i).Confidence;
                     m_Points[i] = Frame.PointCloud.GetPointAsStruct(i);
                     points.Add(pointPos);
+
+                    int layer_mask = LayerMask.GetMask("POI");
+                    RaycastHit hit;
+
+                    if (confidence > 0.3f && Physics.Raycast(pointPos, new Vector3(0, -1, 0), out hit, 0.5f))
+                    {
+                        distances.Add(hit.distance);
+                        confidentPoints.Add(pointPos);
+                    }
+                }
+
+                for (int i = 0; i < confidentPoints.Count; i++) {
+                    Vector3 v = confidentPoints[i];
+
+                    for (int n = i + 1; n < confidentPoints.Count; n++) {
+
+                        if (Vector3.Distance(confidentPoints[n], v) <= 0.1f) {
+                            Debug.DrawLine(v, confidentPoints[n], Color.red, 0.3f);
+                        }
+
+                    }
+
                 }
 
                 // Update the mesh indicies array.
@@ -86,21 +110,21 @@ namespace GoogleARCore.Examples.Common
                 //     return;
                 // }
 
-                distances.Sort();
-                points.Sort((a, b) => a.x.CompareTo(b.x));
+                // distances.Sort();
+                // points.Sort((a, b) => a.x.CompareTo(b.x));
 
-                int trim = Mathf.FloorToInt(distances.Count * 0.4f);
+                // int trim = Mathf.FloorToInt(distances.Count * 0.4f);
 
-                for (int i = trim; i < distances.Count - trim; i++) {
-                    boxExtent += distances[i];
-                    center += points[i];
-                }
+                // for (int i = trim; i < distances.Count - trim; i++) {
+                //     boxExtent += distances[i];
+                //     center += points[i];
+                // }
 
-                boxExtent /= 100 * (distances.Count);
-                center = center / (Frame.PointCloud.PointCount - (trim * 2));
-                if (!float.IsNaN(center.x)) {
-                    focusMarker.transform.position = center;
-                }
+                // boxExtent /= 100 * (distances.Count);
+                // center = center / (Frame.PointCloud.PointCount - (trim * 2));
+                // if (!float.IsNaN(center.x)) {
+                //     focusMarker.transform.position = center;
+                // }
             }
         }
 
