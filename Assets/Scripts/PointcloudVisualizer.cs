@@ -37,6 +37,7 @@ namespace GoogleARCore.Examples.Common
         private Vector3 center;
         private float boxExtent;
         public GameObject focusMarker;
+        List<Bounds> clusterBoxes = new List<Bounds>();
 
         /// <summary>
         /// Unity start.
@@ -71,25 +72,37 @@ namespace GoogleARCore.Examples.Common
                     int layer_mask = LayerMask.GetMask("POI");
                     RaycastHit hit;
 
-                    if (confidence > 0.3f && Physics.Raycast(pointPos, new Vector3(0, -1, 0), out hit, 0.5f))
+                    if (confidence > 0.4f)
                     {
-                        distances.Add(hit.distance);
                         confidentPoints.Add(pointPos);
                     }
                 }
 
+                List<Bounds> clusterBounds = new List<Bounds>();
+
                 for (int i = 0; i < confidentPoints.Count; i++) {
-                    Vector3 v = confidentPoints[i];
+                    Bounds potentialCluster = new Bounds(confidentPoints[i], Vector3.zero);
+
+                    int congruentVecs = 0;
 
                     for (int n = i + 1; n < confidentPoints.Count; n++) {
-
-                        if (Vector3.Distance(confidentPoints[n], v) <= 0.1f) {
-                            Debug.DrawLine(v, confidentPoints[n], Color.red, 0.3f);
+                        if (Vector3.Distance(confidentPoints[n], confidentPoints[i]) <= 0.8f) {
+                            potentialCluster.Encapsulate(confidentPoints[n]);
+                            congruentVecs++;
                         }
+                    }
 
+                    if (congruentVecs > 3) {
+                        clusterBounds.Add(potentialCluster);
+                        // Debug.DrawLine(maxClusterExtent, new Vector3(minClusterExtent.x, maxClusterExtent.y, maxClusterExtent.z), Color.magenta, 0.3f);
+                        // Debug.DrawLine(maxClusterExtent, new Vector3(maxClusterExtent.x, maxClusterExtent.y, minClusterExtent.z), Color.magenta, 0.3f);
+                        // Debug.DrawLine(minClusterExtent, new Vector3(maxClusterExtent.x, maxClusterExtent.y, minClusterExtent.z), Color.magenta, 0.3f);
+                        // Debug.DrawLine(minClusterExtent, new Vector3(minClusterExtent.x, maxClusterExtent.y, maxClusterExtent.z), Color.magenta, 0.3f);
                     }
 
                 }
+
+                clusterBoxes = mergeClusters(clusterBounds);
 
                 // Update the mesh indicies array.
                 int[] indices = new int[Frame.PointCloud.PointCount];
@@ -97,8 +110,8 @@ namespace GoogleARCore.Examples.Common
                 {
                     indices[i] = i;
 
-                    Vector3 pointPos = Frame.PointCloud.GetPointAsStruct(i).Position;
-                    distances.Add(Vector3.Distance(pointPos, center));
+                    // Vector3 pointPos = Frame.PointCloud.GetPointAsStruct(i).Position;
+                    // distances.Add(Vector3.Distance(pointPos, center));
                 }
 
                 m_Mesh.Clear();
@@ -128,13 +141,30 @@ namespace GoogleARCore.Examples.Common
             }
         }
 
+        List<Bounds> mergeClusters(List<Bounds> clusters) {
 
-        // void OnDrawGizmos()
-        // {
-        // // Draw a yellow sphere at the transform's position
-        //     Gizmos.color = Color.yellow;
-        //     Gizmos.DrawWireSphere(center, 0.05f);
-        //     //Gizmos.DrawWireCube(center, new Vector3(boxExtent, boxExtent, boxExtent));
-        // }
+            for (int i = clusters.Count - 1; i >= 0; i--) {
+                Bounds bound = clusters[i];
+
+                for (int n = clusters.Count - 1; n >= 0; n--) {
+                    if (n != i && (bound.Intersects(clusters[n]))) {
+                        clusters[n].Encapsulate(bound);
+                        clusters.RemoveAt(i);
+                        break;
+                    }
+                }
+            }
+
+            return clusters;
+        }
+
+        void OnDrawGizmos()
+        {
+            Gizmos.color = Color.yellow;
+
+            foreach (Bounds bound in clusterBoxes) {
+                Gizmos.DrawWireCube(bound.center, bound.extents * 1.5f);
+            }
+        }
     }
 }

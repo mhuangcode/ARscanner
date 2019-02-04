@@ -88,7 +88,7 @@ namespace GoogleARCore.Examples.Common
             pointOfInterest = Instantiate(markerVolume, Vector3.zero, Quaternion.identity);
             pointOfInterest.transform.localScale = Vector3.zero;
             pointOfInterest.transform.parent = gameObject.transform;
-            pointOfInterest.GetComponent<Renderer>().material.color = Random.ColorHSV(0f, 1f, 0.2f, 0.4f, 0.5f, 1f, 0.3f, 0.3f);
+            pointOfInterest.GetComponent<Renderer>().material.SetColor("_Color1", Random.ColorHSV(0f, 1f, 0.2f, 0.4f, 0.5f, 1f, 1.0f, 1.0f));
             infoText = Instantiate(volumeInfoText, Vector3.zero, Quaternion.identity);
             infoText.transform.parent = gameObject.transform;
         }
@@ -150,7 +150,7 @@ namespace GoogleARCore.Examples.Common
                 if (Physics.Raycast(markers[i].transform.position, new Vector3(0, -1, 0), out hit, 100f, layer_mask))
                 {
                     distances.Add(hit.distance);
-                    Debug.DrawRay(markers[i].transform.position, new Vector3(0, -1, 0) * hit.distance, Color.yellow, 5f);
+                    //Debug.DrawRay(markers[i].transform.position, new Vector3(0, -1, 0) * hit.distance, Color.yellow, 5f);
                 }
             }
 
