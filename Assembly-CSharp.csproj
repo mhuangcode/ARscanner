@@ -188,6 +188,7 @@
      <Compile Include="Assets\GoogleARCore\SDK\Scripts\XPSession.cs" />
      <Compile Include="Assets\GoogleARCore\SDK\Scripts\XPSessionStatus.cs" />
      <Compile Include="Assets\GoogleARCore\SDK\Scripts\XPTrackingState.cs" />
+     <Compile Include="Assets\ScreenCap.cs" />
      <Compile Include="Assets\Scripts\ARController.cs" />
      <Compile Include="Assets\Scripts\CornerMarker.cs" />
      <Compile Include="Assets\Scripts\DetectedPlaneGenerator.cs" />

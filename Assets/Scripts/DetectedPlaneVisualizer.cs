@@ -20,6 +20,7 @@
 
 namespace GoogleARCore.Examples.Common
 {
+    using System.Collections;
     using System.Collections.Generic;
     using GoogleARCore;
     using UnityEngine;
@@ -64,6 +65,7 @@ namespace GoogleARCore.Examples.Common
         public GameObject volumeInfoText;
         GameObject infoText;
         GameObject centerTracker;
+        bool captured = false;
 
         /// <summary>
         /// The Unity Awake() method.
@@ -91,6 +93,7 @@ namespace GoogleARCore.Examples.Common
             pointOfInterest.GetComponent<Renderer>().material.SetColor("_Color1", Random.ColorHSV(0f, 1f, 0.2f, 0.4f, 0.5f, 1f, 1.0f, 1.0f));
             infoText = Instantiate(volumeInfoText, Vector3.zero, Quaternion.identity);
             infoText.transform.parent = gameObject.transform;
+
         }
 
         public void updateMarkers() {
@@ -138,6 +141,65 @@ namespace GoogleARCore.Examples.Common
             }
 
             centerTracker.transform.rotation = m_DetectedPlane.CenterPose.rotation;
+            //ScreenCap.captureScreen(new Vector2Int(500, 500), new Vector2Int(100, 300));
+            captured = false;
+        }
+
+        bool getMarkerScreenSpace(out Vector2Int size, out Vector2Int start) {
+            Vector2Int end = Vector2Int.zero;
+            start = new Vector2Int(Screen.width, Screen.height);
+            size = Vector2Int.zero;
+            int missingPoints = 0;
+
+            foreach (GameObject marker in markers) {
+                Camera cam = Camera.main;
+
+                Vector3 pointOnScreen = cam.WorldToScreenPoint(marker.transform.position);
+
+                if ((pointOnScreen.x < 0) || (pointOnScreen.x > Screen.width) || (pointOnScreen.y < 0) || (pointOnScreen.y > Screen.height))
+                {
+                    missingPoints++;
+
+                    if (missingPoints > 1) {
+                        return false;
+                    }
+                }
+
+                start.x = Mathf.RoundToInt(Mathf.Min(start.x, pointOnScreen.x));
+                start.y = Mathf.RoundToInt(Mathf.Min(start.y, pointOnScreen.y));
+                end.x = Mathf.RoundToInt(Mathf.Max(end.x, pointOnScreen.x));
+                end.y = Mathf.RoundToInt(Mathf.Max(end.y, pointOnScreen.y));
+            }
+
+            foreach (GameObject marker in markers) {
+                Camera cam = Camera.main;
+
+                Vector3 pointOnScreen = cam.WorldToScreenPoint(marker.transform.position);
+                pointOnScreen.y -= pointOfInterest.transform.localScale.y;
+
+                if ((pointOnScreen.x < 0) || (pointOnScreen.x > Screen.width) || (pointOnScreen.y < 0) || (pointOnScreen.y > Screen.height))
+                {
+                    missingPoints++;
+
+                    if (missingPoints > 4) {
+                        return false;
+                    }
+                }
+
+                start.x = Mathf.RoundToInt(Mathf.Min(start.x, pointOnScreen.x));
+                start.y = Mathf.RoundToInt(Mathf.Min(start.y, pointOnScreen.y));
+                end.x = Mathf.RoundToInt(Mathf.Max(end.x, pointOnScreen.x));
+                end.y = Mathf.RoundToInt(Mathf.Max(end.y, pointOnScreen.y));
+
+                 size = new Vector2Int((end.x - start.x), (end.y - start.y));
+
+                Debug.Log("Visible");
+
+                return true;
+            }
+
+
+            return false;
         }
 
         float getHeight() {
@@ -220,8 +282,16 @@ namespace GoogleARCore.Examples.Common
                  return;
             }
 
-            //setRenderer(true);
+           if (!captured) {
+                Vector2Int size;
+                Vector2Int start;
 
+                if (getMarkerScreenSpace(out size, out start)) {
+                    ScreenCap.onCapture(size, start, gameObject.GetInstanceID());
+                    captured = true;
+                }
+           }
+            //setRenderer(true);
             _UpdateMeshIfNeeded();
         }
 
@@ -333,7 +403,6 @@ namespace GoogleARCore.Examples.Common
 
                 m_MeshColors.Add(Color.white);
             }
-
 
             updateMarkers();
 
