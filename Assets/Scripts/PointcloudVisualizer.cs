@@ -36,8 +36,9 @@ namespace GoogleARCore.Examples.Common
 
         private Vector3 center;
         private float boxExtent;
-        public GameObject focusMarker;
+        public GameObject clusterVisualizer;
         List<Bounds> clusterBoxes = new List<Bounds>();
+        List<GameObject> drawnClusters = new List<GameObject>();
 
         /// <summary>
         /// Unity start.
@@ -68,9 +69,6 @@ namespace GoogleARCore.Examples.Common
                     float confidence = Frame.PointCloud.GetPointAsStruct(i).Confidence;
                     m_Points[i] = Frame.PointCloud.GetPointAsStruct(i);
                     points.Add(pointPos);
-
-                    int layer_mask = LayerMask.GetMask("POI");
-                    RaycastHit hit;
 
                     if (confidence > 0.4f)
                     {
@@ -138,6 +136,8 @@ namespace GoogleARCore.Examples.Common
                 // if (!float.IsNaN(center.x)) {
                 //     focusMarker.transform.position = center;
                 // }
+
+                drawClusters();
             }
         }
 
@@ -155,16 +155,55 @@ namespace GoogleARCore.Examples.Common
                 }
             }
 
+            foreach (Bounds bound in clusters) {
+                int layer_mask = LayerMask.GetMask("POI");
+                RaycastHit hit;
+
+                if (Physics.Raycast(bound.center, new Vector3(0, -1, 0), out hit, 10f, layer_mask)) {
+                    bound.Encapsulate(hit.point);
+                }
+            }
+
             return clusters;
         }
 
-        void OnDrawGizmos()
-        {
-            Gizmos.color = Color.yellow;
+        void drawClusters() {
+
+            foreach (GameObject cluster in drawnClusters) {
+                Destroy(cluster);
+            }
+
+            drawnClusters = new List<GameObject>();
 
             foreach (Bounds bound in clusterBoxes) {
-                Gizmos.DrawWireCube(bound.center, bound.extents * 1.5f);
+                Vector3 scale = bound.extents * 1.5f;
+                if (getCmVolume(scale) < 12f) {
+                    continue;
+                }
+
+                GameObject newCluster = Instantiate(clusterVisualizer, Vector3.zero, Quaternion.identity);
+
+
+                newCluster.transform.position = bound.center;
+                newCluster.transform.localScale = scale;
+                newCluster.transform.GetChild(0).gameObject.GetComponent<TextBillboarding>().setText(Mathf.Round(scale.x * 100) + "cm x " + Mathf.Round(scale.y * 100) + "cm x " + Mathf.Round(scale.z * 100) + "cm");
+
+                drawnClusters.Add(newCluster);
             }
         }
+
+        float getCmVolume(Vector3 extent) {
+            extent *= 100f;
+            return extent.x * extent.y * extent.z;
+        }
+
+        // void OnDrawGizmos()
+        // {
+        //     Gizmos.color = Color.yellow;
+
+        //     foreach (Bounds bound in clusterBoxes) {
+        //         Gizmos.DrawWireCube(bound.center, bound.extents * 1.5f);
+        //     }
+        // }
     }
 }

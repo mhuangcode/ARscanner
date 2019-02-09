@@ -90,7 +90,10 @@ namespace GoogleARCore.Examples.Common
             pointOfInterest = Instantiate(markerVolume, Vector3.zero, Quaternion.identity);
             pointOfInterest.transform.localScale = Vector3.zero;
             pointOfInterest.transform.parent = gameObject.transform;
-            pointOfInterest.GetComponent<Renderer>().material.SetColor("_Color1", Random.ColorHSV(0f, 1f, 0.2f, 0.4f, 0.5f, 1f, 1.0f, 1.0f));
+            Color color = Random.ColorHSV(0f, 1f, 0.2f, 0.4f, 0.5f, 1f, 1.0f, 1.0f);
+            pointOfInterest.GetComponent<Renderer>().material.SetColor("_Color1", color);
+            color.a = 0.1f;
+            pointOfInterest.GetComponent<Renderer>().material.SetColor("_Color", color);
             infoText = Instantiate(volumeInfoText, Vector3.zero, Quaternion.identity);
             infoText.transform.parent = gameObject.transform;
 
@@ -137,7 +140,7 @@ namespace GoogleARCore.Examples.Common
                 // scale.z = Mathf.Abs(m_DetectedPlane.ExtentZ);
                 pointOfInterest.transform.localScale = scale;
 
-                infoText.GetComponent<TextBillboarding>().setText((scale.x * 100) + "cm x " + (scale.y * 100) + "cm x " + (scale.z * 100) + "cm");
+                infoText.GetComponent<TextBillboarding>().setText(Mathf.Round(scale.x * 100) + "cm x " + Mathf.Round(scale.y * 100) + "cm x " + Mathf.Round(scale.z * 100) + "cm");
             }
 
             centerTracker.transform.rotation = m_DetectedPlane.CenterPose.rotation;
@@ -241,6 +244,10 @@ namespace GoogleARCore.Examples.Common
                 ret = distances[distances.Count - 1];
             }
 
+            if (ret < 0.01f) {
+                return -1;
+            }
+
             return ret;
         }
 
@@ -282,15 +289,15 @@ namespace GoogleARCore.Examples.Common
                  return;
             }
 
-           if (!captured) {
-                Vector2Int size;
-                Vector2Int start;
+        //    if (!captured) {
+        //         Vector2Int size;
+        //         Vector2Int start;
 
-                if (getMarkerScreenSpace(out size, out start)) {
-                    ScreenCap.onCapture(size, start, gameObject.GetInstanceID());
-                    captured = true;
-                }
-           }
+        //         if (getMarkerScreenSpace(out size, out start)) {
+        //             ScreenCap.onCapture(size, start, gameObject.GetInstanceID());
+        //             captured = true;
+        //         }
+        //    }
             //setRenderer(true);
             _UpdateMeshIfNeeded();
         }
